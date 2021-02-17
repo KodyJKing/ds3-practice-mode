@@ -1,0 +1,76 @@
+{ Game   : DarkSoulsIII.exe
+  Version: 
+  Date   : 2020-09-10
+  Author : Kody
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+
+aobscanmodule(INJECT,DarkSoulsIII.exe,89 83 D8 00 00 00 85 C0 55) // should be unique
+alloc(newmem,$1000,"DarkSoulsIII.exe"+1B93AB4)
+globalalloc(isHit, 0x4)
+
+label(code)
+label(return)
+label(onHit)
+
+newmem:
+
+code:
+  // Check if it's the player taking damage.
+  cmp [rbx+00000010],00
+  jne normalHit
+  // Check if the hit will kill them
+  cmp eax, 00
+  jg normalHit
+  // If the hit kills the player, mark them as hit.
+  // Everything will then be healed in the lua script.
+  mov [isHit], 01
+  jmp return
+normalHit:
+  mov [rbx+000000D8],eax
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+
+INJECT:
+  db 89 83 D8 00 00 00
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: "DarkSoulsIII.exe"+1B93AB4
+
+"DarkSoulsIII.exe"+1B93A8E: 50                             -  push rax
+"DarkSoulsIII.exe"+1B93A8F: 51                             -  push rcx
+"DarkSoulsIII.exe"+1B93A90: 48 8B 44 24 10                 -  mov rax,[rsp+10]
+"DarkSoulsIII.exe"+1B93A95: E9 A2 0B FE FF                 -  jmp DarkSoulsIII.exe+1B7463C
+"DarkSoulsIII.exe"+1B93A9A: 48 0F 45 C1                    -  cmovne rax,rcx
+"DarkSoulsIII.exe"+1B93A9E: 48 89 44 24 10                 -  mov [rsp+10],rax
+"DarkSoulsIII.exe"+1B93AA3: 48 8D 64 24 08                 -  lea rsp,[rsp+08]
+"DarkSoulsIII.exe"+1B93AA8: 48 8B 4C 24 F8                 -  mov rcx,[rsp-08]
+"DarkSoulsIII.exe"+1B93AAD: E9 63 06 EE FF                 -  jmp DarkSoulsIII.exe+1A74115
+"DarkSoulsIII.exe"+1B93AB2: 8B 00                          -  mov eax,[rax]
+// ---------- INJECTING HERE ----------
+"DarkSoulsIII.exe"+1B93AB4: 89 83 D8 00 00 00              -  mov [rbx+000000D8],eax
+// ---------- DONE INJECTING  ----------
+"DarkSoulsIII.exe"+1B93ABA: 85 C0                          -  test eax,eax
+"DarkSoulsIII.exe"+1B93ABC: 55                             -  push rbp
+"DarkSoulsIII.exe"+1B93ABD: 48 BD 98 4E 42 40 01 00 00 00  -  mov rbp,DarkSoulsIII.exe+424E98
+"DarkSoulsIII.exe"+1B93AC7: 48 87 2C 24                    -  xchg [rsp],rbp
+"DarkSoulsIII.exe"+1B93ACB: 51                             -  push rcx
+"DarkSoulsIII.exe"+1B93ACC: 52                             -  push rdx
+"DarkSoulsIII.exe"+1B93ACD: 48 8B 4C 24 10                 -  mov rcx,[rsp+10]
+"DarkSoulsIII.exe"+1B93AD2: 48 BA 37 95 9D 40 01 00 00 00  -  mov rdx,DarkSoulsIII.exe+9D9537
+"DarkSoulsIII.exe"+1B93ADC: 48 0F 4F CA                    -  cmovg rcx,rdx
+"DarkSoulsIII.exe"+1B93AE0: 48 89 4C 24 10                 -  mov [rsp+10],rcx
+}
